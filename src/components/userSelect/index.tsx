@@ -4,12 +4,11 @@ import { MyContext } from "../../context";
 import { members } from "./constants";
 
 export const UserSelect = () => {
+  const { value, updateValue } = useContext(MyContext);
+
   const onChange = (e: RadioChangeEvent) => {
     updateValue(e.target.value);
   };
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const { value, updateValue } = useContext(MyContext);
 
   return (
     <Radio.Group onChange={onChange} value={value}>

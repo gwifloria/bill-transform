@@ -1,13 +1,19 @@
 import { ReactNode, createContext, useState } from "react";
 
-export const MyContext = createContext({
+interface MyContextType {
+  value: string;
+  updateValue: (value: string) => void;
+}
+
+export const MyContext = createContext<MyContextType>({
   value: "珏珏子",
+  updateValue: () => {},
 });
 
 const MyProvider = ({ children }: { children: ReactNode }) => {
   const [contextValue, setContextValue] = useState<string>("珏珏子");
 
-  const contextData = {
+  const contextData: MyContextType = {
     value: contextValue,
     updateValue: setContextValue,
   };

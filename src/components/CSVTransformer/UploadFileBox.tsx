@@ -1,13 +1,14 @@
 import { InboxOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { Upload } from "antd";
+import { Upload, message } from "antd";
 import Papa, { ParseResult } from "papaparse";
 import React, { useContext } from "react";
 import { MyContext } from "../../context";
 import { UploadType, configs, parseConfigs, title } from "./config";
 import { aliHandler } from "./aliHandler";
 import { isEmpty } from "lodash";
-import { typesGroupByKeyWords } from "./keywords";
+import { typesGroupByKeyWords, sortedKeywords } from "./keywords";
+import * as XLSX from "xlsx";
 const { Dragger } = Upload;
 
 const UploadFileBox: React.FC<{ type: UploadType }> = ({ type }) => {
@@ -19,14 +20,16 @@ const UploadFileBox: React.FC<{ type: UploadType }> = ({ type }) => {
     return data
       .filter((_, index) => index >= config.startIndex)
       .filter((row) => !isEmpty(row[0]))
-
       .map((value) => {
         let types: string[] = [];
 
-        Object.keys(typesGroupByKeyWords).some((key) => {
+        // 使用排序后的关键词列表，优先匹配长关键词
+        sortedKeywords.some((key) => {
           if (value[config.nameIdx].includes(key)) {
             types = typesGroupByKeyWords[key];
+            return true; // 找到匹配后立即停止
           }
+          return false;
         });
 
         return [
@@ -39,6 +42,30 @@ const UploadFileBox: React.FC<{ type: UploadType }> = ({ type }) => {
           ...types,
         ];
       });
+  };
+
+  // 解析 xlsx 文件为二维数组
+  const parseXLSXFile = (file: File): Promise<string[][]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = e.target?.result;
+          const workbook = XLSX.read(data, { type: "binary" });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+            header: 1,
+            defval: "",
+          }) as string[][];
+          resolve(jsonData);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error("文件读取失败"));
+      reader.readAsBinaryString(file);
+    });
   };
 
   function handleDownloadCSV(data: string[][], name: string) {
@@ -54,32 +81,68 @@ const UploadFileBox: React.FC<{ type: UploadType }> = ({ type }) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    message.success("文件转换成功！");
   }
 
-  const onParseSuccess = (res: ParseResult<string[]>, name: string) => {
-    const { data } = res;
+  const onParseSuccess = (data: string[][], name: string) => {
+    try {
+      let expectedData = type === "wechat" ? data : aliHandler(data);
+      expectedData = [...formatHandler(expectedData)];
+      expectedData.unshift(title);
+      console.log(data);
 
-    let expectedData = type === "wechat" ? data : aliHandler(data);
-    expectedData = [...formatHandler(expectedData)];
-    expectedData.unshift(title);
-
-    handleDownloadCSV(expectedData, name);
+      handleDownloadCSV(expectedData, name);
+    } catch (error) {
+      console.error("数据处理失败:", error);
+      message.error("数据处理失败，请检查文件格式是否正确");
+    }
   };
 
   const props: UploadProps = {
     name: "file",
     multiple: false,
-    onChange(info) {
+    async onChange(info) {
       const { file } = info;
       const { originFileObj } = file;
 
       if (!originFileObj) return;
 
-      Papa.parse(originFileObj, {
-        complete: (res: ParseResult<string[]>) =>
-          onParseSuccess(res, file.name),
-        ...parseConfig,
-      });
+      try {
+        const fileName = file.name.toLowerCase();
+        const isXLSX = fileName.endsWith(".xlsx") || fileName.endsWith(".xls");
+        const isCSV = fileName.endsWith(".csv");
+
+        if (!isXLSX && !isCSV) {
+          message.error("请上传 CSV 或 XLSX 格式的文件");
+          return;
+        }
+
+        if (isXLSX) {
+          // 处理 xlsx 文件
+          const data = await parseXLSXFile(originFileObj);
+          onParseSuccess(data, file.name);
+        } else {
+          // 处理 csv 文件
+          Papa.parse(originFileObj, {
+            complete: (res: ParseResult<string[]>) => {
+              if (res.errors.length > 0) {
+                console.error("CSV 解析错误:", res.errors);
+                message.error("CSV 文件解析失败");
+                return;
+              }
+              onParseSuccess(res.data, file.name);
+            },
+            error: (error: Error) => {
+              console.error("CSV 解析错误:", error);
+              message.error("CSV 文件解析失败");
+            },
+            ...parseConfig,
+          });
+        }
+      } catch (error) {
+        console.error("文件处理失败:", error);
+        message.error("文件处理失败，请重试");
+      }
     },
     onDrop(e) {
       console.log("Dropped files", e.dataTransfer.files);
@@ -90,13 +153,13 @@ const UploadFileBox: React.FC<{ type: UploadType }> = ({ type }) => {
     <Dragger
       showUploadList={false}
       customRequest={() => {}}
-      accept=".csv"
+      accept=".csv,.xlsx,.xls"
       {...props}
     >
       <p className="ant-upload-drag-icon">
         <InboxOutlined />
       </p>
-      <p className="ant-upload-hint">把{type}csv拖到这里哦</p>
+      <p className="ant-upload-hint">把{type}账单文件(CSV/XLSX)拖到这里哦</p>
     </Dragger>
   );
 };
