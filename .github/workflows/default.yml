@@ -41,8 +41,9 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Build
         run: |
+          rm -rf node_modules package-lock.json
           npm install
-          npm run build --source ./
+          npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
