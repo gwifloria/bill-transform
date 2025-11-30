@@ -26,8 +26,8 @@ npm run preview
 
 ### Core Data Flow
 
-1. **Upload**: User drags CSV file into UploadFileBox component
-2. **Parse**: PapaParse library parses CSV based on platform-specific config
+1. **Upload**: User drags CSV/XLSX file into UploadFileBox component
+2. **Parse**: PapaParse (CSV) or xlsx library (XLSX/XLS) parses file based on format and platform-specific config
 3. **Transform**: Platform-specific handler processes data:
    - WeChat: Direct processing with formatHandler
    - Alipay: Additional aliHandler preprocessing (handles refunds, filters Yu'e Bao)
@@ -61,11 +61,11 @@ Parse configs handle encoding differences (Alipay uses GBK, WeChat uses default)
 
 ### Categorization (keywords.ts)
 
-Keyword-based transaction categorization uses a simple string matching system. Each keyword maps to a 3-level category array `[大类, 小类, detail]`:
+Keyword-based transaction categorization using string matching. Each keyword maps to a category array `[大类, 小类, detail?]`:
 - "骑" → ["基本交通", "通勤", "单车"]
 - "盒马" → ["购物消费", "超市"]
 
-The first matching keyword in transaction name determines category.
+Keywords are sorted by length (longest first) via `sortedKeywords` to ensure specific matches take priority over general ones. The first matching keyword determines category.
 
 ### Context Architecture
 
@@ -93,9 +93,14 @@ Global state managed via React Context (context/index.tsx):
 
 ## Output Format
 
-Transformed CSV structure:
+CSV header row (from `config.ts:title`):
 ```
-[名称, 时间, 金额, null, null, null, null, 类型, 成员, 支出成员, 大类, 小类]
+[名称, 时间, 金额, null×4, 类型, 成员, 支出成员, 大类, 小类]
 ```
 
-The 4 null columns (index 3-6) serve as spacing in the output format.
+Data rows (from `UploadFileBox.tsx:formatHandler`):
+```
+[交易名称, 交易时间, 金额, null×3, 成员名, 成员名, 大类, 小类, detail]
+```
+
+Note: Header and data rows have slight column mismatch (4 vs 3 nulls). The null columns serve as spacing for the target spreadsheet format.
