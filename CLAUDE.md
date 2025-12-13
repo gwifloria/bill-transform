@@ -37,15 +37,16 @@ npm run preview
 ### Platform-Specific Processing
 
 **Alipay (aliHandler.ts:3-45)**:
-- Extracts data from row 22 (Alipay export format quirk)
-- Splits multi-line cell data by `\n` delimiter
+- Extracts data from row index 22 (Alipay export format quirk where all data is in a single row)
+- Splits multi-line cell data by `\n` delimiter to reconstruct proper rows
 - Handles refund logic: matches "退款-[name]" entries with original transactions
 - Filters Yu'e Bao (余额宝) transactions
 - Subtracts refund amounts from original transaction values
 - Filters out zero-value transactions after refund adjustment
+- After preprocessing, uses `aliConfig.startIndex: 1` for further processing
 
 **WeChat**:
-- Simpler processing, starts from row 17
+- Simpler processing, uses `startIndex: 17` directly
 - Direct field mapping without refund handling
 
 ### Configuration System (config.ts)

@@ -22,22 +22,34 @@ const UploadFileBox: React.FC<{ type: UploadType }> = ({ type }) => {
       .filter((row) => !isEmpty(row[0]))
       .map((value) => {
         let types: string[] = [];
+        // 过滤名称中的【...】和(...)
+        const itemName = value[config.nameIdx]
+          .replace(/【[^】]*】/g, "")
+          .replace(/\([^)]*\)/g, "");
 
         // 使用排序后的关键词列表，优先匹配长关键词
         sortedKeywords.some((key) => {
-          if (value[config.nameIdx].includes(key)) {
+          if (itemName.includes(key)) {
             types = typesGroupByKeyWords[key];
             return true; // 找到匹配后立即停止
           }
           return false;
         });
 
+        // 根据关键词设置成员
+        let member = name;
+        if (itemName.includes("猫")) {
+          member = "Money";
+        } else if (itemName.includes("王敏")) {
+          member = "双人成行";
+        }
+
         return [
-          value[config.nameIdx],
+          itemName,
           value[config.timeIndex],
           value[config.valueIndex],
           ...new Array(3).fill(null),
-          name,
+          member,
           name,
           ...types,
         ];
@@ -68,15 +80,19 @@ const UploadFileBox: React.FC<{ type: UploadType }> = ({ type }) => {
     });
   };
 
-  function handleDownloadCSV(data: string[][], name: string) {
+  function handleDownloadCSV(data: string[][], fileName: string) {
     const csv = Papa.unparse(data);
-    const blob = new Blob([csv], { type: "text/csv" });
+    // 添加 UTF-8 BOM 以确保 Excel 正确识别中文
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
 
-    name = type === "wechat" ? name : `alipay${data[1][1]}.csv`;
+    // 确保文件名以 .csv 结尾
+    let outputName = type === "wechat" ? fileName : `alipay${data[1][1] || ""}`;
+    outputName = outputName.replace(/\.(xlsx|xls|csv)$/i, "");
+    outputName = `custom_${outputName}.csv`;
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `custom_${name}`;
+    link.download = outputName;
 
     document.body.appendChild(link);
     link.click();

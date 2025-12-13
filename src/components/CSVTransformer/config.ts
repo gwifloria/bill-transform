@@ -14,7 +14,7 @@ export const aliConfig = {
   nameIdx: 4,
 };
 export type UploadType = "alipay" | "wechat";
-const stepLength = 4;
+const stepLength = 3;
 
 export const configs: {
   [key in UploadType]: {
@@ -43,9 +43,9 @@ export const title = [
   "时间",
   "金额",
   ...new Array(stepLength).fill(null),
-  "类型",
   "成员",
-  "支出成员",
+  "收付款人",
   "大类",
   "小类",
+  "细分类",
 ];
