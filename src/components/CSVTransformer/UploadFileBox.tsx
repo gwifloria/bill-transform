@@ -41,7 +41,7 @@ const UploadFileBox: React.FC<{ type: UploadType }> = ({ type }) => {
         if (itemName.includes("猫")) {
           member = "Money";
         } else if (itemName.includes("王敏")) {
-          member = "双人成行";
+          member = "双人行";
         }
 
         return [
