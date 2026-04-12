@@ -69,6 +69,7 @@ const UploadFileBox: React.FC<{ type: UploadType }> = ({ type }) => {
           const jsonData = XLSX.utils.sheet_to_json(worksheet, {
             header: 1,
             defval: "",
+            raw: false,
           }) as string[][];
           resolve(jsonData);
         } catch (error) {
