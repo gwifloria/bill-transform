@@ -7,7 +7,7 @@ export const wechatConfig = {
 };
 
 export const aliConfig = {
-  startIndex: 1,
+  startIndex: 0,
   timeIndex: 0,
   valueIndex: 6,
   typeIdx: 5,
@@ -34,7 +34,6 @@ export const parseConfigs = {
   alipay: {
     skipEmptyLines: true,
     encoding: "gbk",
-    delimiter: "\n",
   },
 };
 

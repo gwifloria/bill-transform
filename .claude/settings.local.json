@@ -8,7 +8,11 @@
       "Bash(python3 -c ':*)",
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m ':*)"
+      "Bash(git commit -m ':*)",
+      "Bash(git rm:*)",
+      "Bash(git commit:*)",
+      "Bash(iconv -f GBK -t UTF-8 \"/Users/floria/Downloads/支付宝交易明细\\(20260429-20260515\\).csv\")",
+      "Bash(npm run *)"
     ]
   }
 }
