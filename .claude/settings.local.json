@@ -12,7 +12,8 @@
       "Bash(git rm:*)",
       "Bash(git commit:*)",
       "Bash(iconv -f GBK -t UTF-8 \"/Users/floria/Downloads/支付宝交易明细\\(20260429-20260515\\).csv\")",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(awk 'NR==25' \"/Users/floria/Downloads/支付宝交易明细\\(20260429-20260515\\).csv\")"
     ]
   }
 }

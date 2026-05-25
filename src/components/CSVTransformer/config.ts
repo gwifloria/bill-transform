@@ -34,6 +34,8 @@ export const parseConfigs = {
   alipay: {
     skipEmptyLines: true,
     encoding: "gbk",
+    newline: "\n",
+    delimiter: ",",
   },
 };
 

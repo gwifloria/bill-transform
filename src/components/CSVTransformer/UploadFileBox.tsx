@@ -143,7 +143,9 @@ const UploadFileBox: React.FC<{ type: UploadType }> = ({ type }) => {
           Papa.parse(originFileObj, {
             complete: (res: ParseResult<string[]>) => {
               if (res.errors.length > 0) {
-                console.error("CSV 解析错误:", res.errors);
+                console.warn("CSV 解析警告:", res.errors);
+              }
+              if (!res.data || res.data.length === 0) {
                 message.error("CSV 文件解析失败");
                 return;
               }
